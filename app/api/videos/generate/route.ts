@@ -26,13 +26,13 @@ export async function POST(req: NextRequest) {
     await spend(code, VIDEO_COST);
   } catch {
     return NextResponse.json(
-      { error: `Not enough generations left (video costs ${VIDEO_COST}).` },
+      { error: `Not enough credits (video costs ${VIDEO_COST}).` },
       { status: 402 }
     );
   }
 
   return startJob("/api/v1/videos/generate", {
     prompt: body.prompt.trim(),
-    image_size: ratio, // ⚠ verify field name against imgeditor docs
+    aspect_ratio: ratio,
   });
 }

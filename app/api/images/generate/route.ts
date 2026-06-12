@@ -29,15 +29,23 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json(
       {
-        error: `Not enough generations left (${model.label} costs ${model.cost}). Contact the operator to top up.`,
+        error: `Not enough credits (${model.label} costs ${model.cost}). Contact the operator to top up.`,
       },
       { status: 402 }
     );
   }
 
-  return startJob("/api/v1/images/generate", {
+  const payload: Record<string, unknown> = {
     prompt: body.prompt.trim(),
+    mode: "text",
     model: model.upstream,
-    image_size: ratio, // ⚠ verify field name against imgeditor docs
-  });
+    aspect_ratio: ratio,
+    num_images: 1,
+    output_format: "png",
+  };
+  if (modelId === "pro") {
+    payload.resolution = "2K"; // free quality bump on nano-banana-pro
+  }
+
+  return startJob("/api/v1/images/generate", payload);
 }
