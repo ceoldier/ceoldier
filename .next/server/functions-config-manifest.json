@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "functions": {
+    "/api/images/generate": {},
+    "/api/images/status": {},
+    "/api/videos/generate": {},
+    "/api/videos/status": {}
+  }
+}

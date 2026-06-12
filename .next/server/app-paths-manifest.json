@@ -1,0 +1,8 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/videos/generate/route": "app/api/videos/generate/route.js",
+  "/api/images/generate/route": "app/api/images/generate/route.js",
+  "/api/videos/status/route": "app/api/videos/status/route.js",
+  "/api/images/status/route": "app/api/images/status/route.js",
+  "/page": "app/page.js"
+}

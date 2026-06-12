@@ -1,0 +1,8 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/videos/generate/route": "/api/videos/generate",
+  "/api/images/generate/route": "/api/images/generate",
+  "/api/videos/status/route": "/api/videos/status",
+  "/api/images/status/route": "/api/images/status",
+  "/page": "/"
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { proxyPost } from "@/lib/proxy";
+import { startJob } from "@/lib/proxy";
 
 export const runtime = "nodejs";
 
@@ -11,5 +11,5 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  return proxyPost("/api/v1/videos/generate", { prompt: body.prompt.trim() });
+  return startJob("/api/v1/videos/generate", body.prompt.trim());
 }

@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { proxyGet } from "@/lib/proxy";
+import { getJobStatus } from "@/lib/proxy";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get("id");
+  const id =
+    req.nextUrl.searchParams.get("id") ??
+    req.nextUrl.searchParams.get("task_id");
   if (!id) {
     return NextResponse.json(
-      { error: "Query parameter 'id' is required." },
+      { error: "Query parameter 'id' or 'task_id' is required." },
       { status: 400 }
     );
   }
-  return proxyGet("/api/v1/images/status", req.nextUrl.searchParams);
+  return getJobStatus("/api/v1/images/status", id);
 }
