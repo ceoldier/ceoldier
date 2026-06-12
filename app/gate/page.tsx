@@ -47,7 +47,7 @@ export default function Gate() {
           htmlFor="code"
           className="mb-2 block font-mono text-xs uppercase tracking-widest text-matrix-dim"
         >
-          &gt; Enter access code
+          &gt; Enter your personal code
         </label>
         <input
           id="code"

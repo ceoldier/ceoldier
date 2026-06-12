@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { startJob } from "@/lib/proxy";
 import { spend } from "@/lib/redis";
 import { verifySession, SESSION_COOKIE } from "@/lib/session";
-import { MODELS, isModelId, isRatio } from "@/lib/options";
 
 export const runtime = "nodejs";
+const COST = 1;
 
 export async function POST(req: NextRequest) {
   const code = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
@@ -20,32 +20,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const modelId = isModelId(body.model) ? body.model : "nano";
-  const ratio = isRatio(body.ratio) ? body.ratio : "1:1";
-  const model = MODELS[modelId];
-
   try {
-    await spend(code, model.cost);
+    await spend(code, COST);
   } catch {
     return NextResponse.json(
-      {
-        error: `Not enough credits (${model.label} costs ${model.cost}). Contact the operator to top up.`,
-      },
+      { error: "You're out of generations. Contact the operator to top up." },
       { status: 402 }
     );
   }
 
-  const payload: Record<string, unknown> = {
-    prompt: body.prompt.trim(),
-    mode: "text",
-    model: model.upstream,
-    aspect_ratio: ratio,
-    num_images: 1,
-    output_format: "png",
-  };
-  if (modelId === "pro") {
-    payload.resolution = "2K"; // free quality bump on nano-banana-pro
-  }
-
-  return startJob("/api/v1/images/generate", payload);
+  return startJob("/api/v1/images/generate", body.prompt.trim());
 }
