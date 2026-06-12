@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession, SESSION_COOKIE } from "@/lib/session";
+
+const COOKIE = "ceoldier_access";
+
+async function expectedToken(): Promise<string | null> {
+  const code = process.env.ACCESS_CODE;
+  if (!code) return null;
+  const data = new TextEncoder().encode(code + "::ceoldier-gate-v1");
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -7,15 +18,15 @@ export async function middleware(req: NextRequest) {
   if (
     pathname === "/gate" ||
     pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/admin") ||
     pathname.startsWith("/_next") ||
     pathname === "/favicon.ico"
   ) {
     return NextResponse.next();
   }
 
-  const code = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
-  if (code) return NextResponse.next();
+  const expected = await expectedToken();
+  const token = req.cookies.get(COOKIE)?.value;
+  if (expected && token === expected) return NextResponse.next();
 
   if (pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "Access denied." }, { status: 401 });
