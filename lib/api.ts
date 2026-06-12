@@ -1,4 +1,5 @@
 import type { JobStatus, MediaKind } from "@/types";
+import type { ModelId, Ratio } from "@/lib/options";
 
 interface GenerateResponse {
   id: string;
@@ -9,6 +10,11 @@ interface StatusResponse {
   status: JobStatus;
   url?: string;
   error?: string;
+}
+
+export interface GenerateOptions {
+  model: ModelId;
+  ratio: Ratio;
 }
 
 async function parseOrThrow<T>(res: Response): Promise<T> {
@@ -27,12 +33,13 @@ async function parseOrThrow<T>(res: Response): Promise<T> {
 
 export async function startGeneration(
   kind: MediaKind,
-  prompt: string
+  prompt: string,
+  options: GenerateOptions
 ): Promise<GenerateResponse> {
   const res = await fetch(`/api/${kind}s/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, model: options.model, ratio: options.ratio }),
   });
   return parseOrThrow<GenerateResponse>(res);
 }
@@ -48,10 +55,6 @@ export async function getStatus(
   return parseOrThrow<StatusResponse>(res);
 }
 
-/**
- * Poll a job until it completes or fails.
- * Images poll every 2s, videos every 4s. Hard timeout: 10 minutes.
- */
 export async function pollUntilDone(
   kind: MediaKind,
   id: string,

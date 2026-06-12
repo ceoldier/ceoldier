@@ -18,10 +18,10 @@ function normalizeStatus(s: string | undefined): string {
   return "processing";
 }
 
-/** POST upstream, unwrap imgeditor's { success, data: { task_id } } into { id } */
+/** POST upstream with an arbitrary payload, unwrap { success, data: { task_id } } into { id } */
 export async function startJob(
   path: string,
-  prompt: string
+  payload: Record<string, unknown>
 ): Promise<NextResponse> {
   const err = configError();
   if (err) return err;
@@ -33,7 +33,7 @@ export async function startJob(
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.API_KEY}`,
       },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify(payload),
       cache: "no-store",
     });
     const body = await upstream.json().catch(() => ({}));

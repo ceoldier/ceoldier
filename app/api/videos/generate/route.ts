@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { startJob } from "@/lib/proxy";
 import { spend } from "@/lib/redis";
 import { verifySession, SESSION_COOKIE } from "@/lib/session";
+import { VIDEO_COST, isRatio } from "@/lib/options";
 
 export const runtime = "nodejs";
-const COST = 3; // videos burn more upstream credits — tune as needed
 
 export async function POST(req: NextRequest) {
   const code = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
@@ -20,14 +20,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const ratio = isRatio(body.ratio) ? body.ratio : "16:9";
+
   try {
-    await spend(code, COST);
+    await spend(code, VIDEO_COST);
   } catch {
     return NextResponse.json(
-      { error: "Not enough generations left for a video. Contact the operator." },
+      { error: `Not enough generations left (video costs ${VIDEO_COST}).` },
       { status: 402 }
     );
   }
 
-  return startJob("/api/v1/videos/generate", body.prompt.trim());
+  return startJob("/api/v1/videos/generate", {
+    prompt: body.prompt.trim(),
+    image_size: ratio, // ⚠ verify field name against imgeditor docs
+  });
 }

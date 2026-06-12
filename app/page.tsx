@@ -8,6 +8,7 @@ import Gallery from "@/components/Gallery";
 import HistoryPanel from "@/components/HistoryPanel";
 import SavedPrompts from "@/components/SavedPrompts";
 import { pollUntilDone, startGeneration } from "@/lib/api";
+import type { ModelId, Ratio } from "@/lib/options";
 import {
   loadHistory,
   loadPrompts,
@@ -19,6 +20,8 @@ import type { Generation, MediaKind, SavedPrompt } from "@/types";
 
 export default function Home() {
   const [kind, setKind] = useState<MediaKind>("image");
+  const [model, setModel] = useState<ModelId>("nano");
+  const [ratio, setRatio] = useState<Ratio>("1:1");
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -27,10 +30,8 @@ export default function Home() {
   const [hydrated, setHydrated] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Hydrate from localStorage on mount
   useEffect(() => {
     setItems(
-      // Anything that was mid-flight when the page closed is stale
       loadHistory().map((g) =>
         g.status === "queued" || g.status === "processing"
           ? { ...g, status: "failed" as const, error: "Interrupted by reload." }
@@ -41,7 +42,6 @@ export default function Home() {
     setHydrated(true);
   }, []);
 
-  // Persist on change (after hydration, to avoid wiping storage with [])
   useEffect(() => {
     if (hydrated) saveHistory(items);
   }, [items, hydrated]);
@@ -77,7 +77,7 @@ export default function Home() {
     setBusy(true);
 
     try {
-      const { id: jobId } = await startGeneration(kind, text);
+      const { id: jobId } = await startGeneration(kind, text, { model, ratio });
       if (!jobId) throw new Error("API did not return a job id.");
 
       patchItem(localId, { status: "processing" });
@@ -107,7 +107,7 @@ export default function Home() {
     } finally {
       setBusy(false);
     }
-  }, [prompt, kind, busy, patchItem, showToast]);
+  }, [prompt, kind, model, ratio, busy, patchItem, showToast]);
 
   const savePrompt = useCallback(() => {
     const text = prompt.trim();
@@ -128,7 +128,6 @@ export default function Home() {
     <main className="relative min-h-screen">
       <MatrixRain />
 
-      {/* Slow vertical scan beam */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-x-0 top-0 z-30 h-24 animate-scanline bg-gradient-to-b from-transparent via-matrix/5 to-transparent"
@@ -140,14 +139,17 @@ export default function Home() {
         </header>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Left: command + gallery */}
           <div className="space-y-6 lg:col-span-2">
             <PromptPanel
               busy={busy}
               kind={kind}
               prompt={prompt}
+              model={model}
+              ratio={ratio}
               onKindChange={setKind}
               onPromptChange={setPrompt}
+              onModelChange={setModel}
+              onRatioChange={setRatio}
               onGenerate={generate}
               onSavePrompt={savePrompt}
             />
@@ -159,7 +161,6 @@ export default function Home() {
             />
           </div>
 
-          {/* Right: history + saved prompts */}
           <aside className="space-y-6">
             <HistoryPanel
               items={items}
@@ -183,7 +184,6 @@ export default function Home() {
         </footer>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div
           role="status"
